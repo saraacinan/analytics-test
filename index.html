@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Test Shop</title>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+  </script>
+</head>
+<body>
+  <h1>Test Shop</h1>
+
+  <div>
+    <h2>Kırmızı Tişört</h2>
+    <p>199 TL</p>
+    <button id="btn-tisort">Sepete Ekle</button>
+  </div>
+
+  <div>
+    <h2>Mavi Kupa</h2>
+    <p>89 TL</p>
+    <button id="btn-kupa">Sepete Ekle</button>
+  </div>
+
+  <hr>
+  <button id="btn-checkout">Satın Al</button>
+
+  <script>
+    document.getElementById('btn-tisort').addEventListener('click', function () {
+      dataLayer.push({
+        event: 'add_to_cart',
+        item_id: 'SKU-001',
+        item_name: 'Kirmizi Tisort',
+        price: 199,
+        currency: 'TRY'
+      });
+      console.log('add_to_cart gonderildi');
+    });
+
+    document.getElementById('btn-kupa').addEventListener('click', function () {
+      dataLayer.push({
+        event: 'add_to_cart',
+        item_id: 'SKU-002',
+        item_name: 'Mavi Kupa',
+        price: 89,
+        currency: 'TRY'
+      });
+      console.log('add_to_cart gonderildi');
+    });
+
+    document.getElementById('btn-checkout').addEventListener('click', function () {
+      dataLayer.push({
+        event: 'purchase',
+        transaction_id: 'T-' + Date.now(),
+        value: 288,
+        currency: 'TRY'
+      });
+      console.log('purchase gonderildi');
+    });
+  </script>
+</body>
+</html>
