@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout &mdash; Sara's Whimsical Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    analytics_storage: 'denied', functionality_storage: 'granted',
+    security_storage: 'granted', wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>boot("checkout");</script>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="section-head"><h2>Checkout</h2></div>
+
+  <div class="cart-layout">
+    <section>
+      <div class="panel">
+        <h2>1. Delivery</h2>
+        <p class="note">Nothing is shipped and nothing is charged. Fields are pre-filled with placeholder values so no personal data is entered.</p>
+        <div class="field">
+          <label for="ship-tier">Delivery speed</label>
+          <select id="ship-tier">
+            <option value="Standard">Standard, 4 to 6 days &mdash; $4.90</option>
+            <option value="Express">Express, 2 days &mdash; $9.90</option>
+            <option value="Pickup">Local pickup &mdash; free</option>
+          </select>
+        </div>
+        <button class="btn btn-solid" id="save-shipping">Save delivery</button>
+      </div>
+
+      <div class="panel">
+        <h2>2. Payment</h2>
+        <div class="field">
+          <label for="pay-type">Payment method</label>
+          <select id="pay-type">
+            <option value="Credit Card">Credit card</option>
+            <option value="Apple Pay">Apple Pay</option>
+            <option value="Bank Transfer">Bank transfer</option>
+          </select>
+        </div>
+        <button class="btn btn-solid" id="save-payment">Save payment</button>
+      </div>
+
+      <div class="panel">
+        <h2>3. Place the order</h2>
+        <p class="muted">This writes a fake order into your browser so you can test the refund flow afterwards.</p>
+        <button class="btn btn-solid btn-block" id="place-order">Place order</button>
+      </div>
+    </section>
+
+    <aside class="receipt" id="checkout-summary"></aside>
+  </div>
+</main>
+
+<script>
+(function () {
+  const COUPON_KEY = "whimsy_coupon";
+
+  function activeCoupon() {
+    const code = localStorage.getItem(COUPON_KEY);
+    return code && COUPONS[code] ? code : null;
+  }
+  function discountFor(subtotal, code) {
+    if (!code || !COUPONS[code]) return 0;
+    const c = COUPONS[code];
+    return c.type === "percent" ? round2(subtotal * c.amount / 100) : Math.min(c.amount, subtotal);
+  }
+  function shippingCost(tier) {
+    return tier === "Express" ? 9.90 : tier === "Pickup" ? 0 : 4.90;
+  }
+
+  function totals() {
+    const subtotal = cartSubtotal();
+    const coupon = activeCoupon();
+    const discount = discountFor(subtotal, coupon);
+    const tier = document.getElementById("ship-tier").value;
+    const shipping = shippingCost(tier);
+    const tax = round2((subtotal - discount) * SHOP.taxRate);
+    return {
+      subtotal, coupon, discount, shipping, tax, tier,
+      total: round2(subtotal - discount + shipping + tax)
+    };
+  }
+
+  function renderSummary() {
+    const t = totals();
+    const cart = getCart();
+    document.getElementById("checkout-summary").innerHTML = `
+      <h2>Order</h2>
+      ${cart.map(function (l) {
+        const p = productById(l.id);
+        return `<div class="receipt-line"><span>${l.quantity} &times; ${p.name}</span><span>${money(p.price * l.quantity)}</span></div>`;
+      }).join("")}
+      <div class="receipt-rule"></div>
+      <div class="receipt-line"><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
+      ${t.coupon ? `<div class="receipt-line"><span>${t.coupon}</span><span>-${money(t.discount)}</span></div>` : ""}
+      <div class="receipt-line"><span>Shipping (${t.tier})</span><span>${money(t.shipping)}</span></div>
+      <div class="receipt-line"><span>Tax</span><span>${money(t.tax)}</span></div>
+      <div class="receipt-rule"></div>
+      <div class="receipt-line receipt-total"><span>Total</span><span>${money(t.total)}</span></div>`;
+  }
+
+  /* Spreads the coupon discount across items so item-level discount is realistic. */
+  function itemsWithDiscount(discount, subtotal, coupon) {
+    return getCart().map(function (line) {
+      const p = productById(line.id);
+      const lineTotal = p.price * line.quantity;
+      const share = subtotal > 0 ? (lineTotal / subtotal) * discount : 0;
+      return buildItem(p, {
+        quantity: line.quantity,
+        listId: "checkout",
+        listName: "Checkout",
+        coupon: coupon || undefined,
+        discount: share / line.quantity
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!getCart().length) {
+      document.querySelector("main").innerHTML =
+        '<div class="panel"><h2>Your bag is empty</h2><p class="muted">Add something first.</p><a class="btn btn-solid" href="category.html">Browse the shop</a></div>';
+      return;
+    }
+
+    renderSummary();
+    document.getElementById("ship-tier").addEventListener("change", renderSummary);
+
+    document.getElementById("save-shipping").addEventListener("click", function () {
+      const t = totals();
+      trackAddShippingInfo(itemsWithDiscount(t.discount, t.subtotal, t.coupon), t.coupon, t.tier);
+      toast("Delivery saved");
+    });
+
+    document.getElementById("save-payment").addEventListener("click", function () {
+      const t = totals();
+      const payment = document.getElementById("pay-type").value;
+      trackAddPaymentInfo(itemsWithDiscount(t.discount, t.subtotal, t.coupon), t.coupon, payment);
+      toast("Payment saved");
+    });
+
+    document.getElementById("place-order").addEventListener("click", function () {
+      const t = totals();
+      const items = itemsWithDiscount(t.discount, t.subtotal, t.coupon);
+      const order = {
+        transaction_id: "T_" + Date.now().toString().slice(-8),
+        value: t.total,
+        tax: t.tax,
+        shipping: t.shipping,
+        coupon: t.coupon,
+        shipping_tier: t.tier,
+        payment_type: document.getElementById("pay-type").value,
+        customer_type: customerType(),
+        currency: SHOP.currency,
+        placed_at: new Date().toISOString(),
+        refunded: false,
+        items: items
+      };
+
+      trackPurchase(order);
+
+      const orders = getOrders();
+      orders.unshift(order);
+      setOrders(orders);
+
+      localStorage.removeItem("whimsy_cart");
+      localStorage.removeItem(COUPON_KEY);
+
+      location.href = "order-confirmation.html?order=" + order.transaction_id;
+    });
+  });
+})();
+</script>
+</body>
+</html>

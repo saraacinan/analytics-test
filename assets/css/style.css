@@ -1,0 +1,343 @@
+/* ============================================================
+   Sara's Whimsical Shop
+   Palette : milk #FFF8FB / blush #FFE7F1 / bubblegum #FF6FAE
+             hot #DC2E7C / plum #3B1730 / lilac #D8C6FF / mint #B9EFD6
+   Type    : Bagel Fat One (display) / Nunito (body) / Space Mono (data)
+   Signature: dashed "receipt tape" panels + rotated stickers
+   ============================================================ */
+
+:root {
+  --milk: #FFF8FB;
+  --blush: #FFE7F1;
+  --blush-deep: #FFD3E6;
+  --bubblegum: #FF6FAE;
+  --hot: #DC2E7C;
+  --plum: #3B1730;
+  --plum-soft: #6E4460;
+  --lilac: #D8C6FF;
+  --mint: #B9EFD6;
+  --line: #F2C9DE;
+  --radius: 18px;
+  --shadow: 0 10px 30px rgba(220, 46, 124, 0.10);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--milk);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(216, 198, 255, 0.35), transparent 42%),
+    radial-gradient(circle at 88% 2%, rgba(255, 211, 230, 0.55), transparent 38%);
+  background-attachment: fixed;
+  color: var(--plum);
+  font-family: "Nunito", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+img { max-width: 100%; display: block; }
+a { color: var(--hot); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+:focus-visible { outline: 3px solid var(--bubblegum); outline-offset: 3px; border-radius: 6px; }
+
+h1, h2, h3 { line-height: 1.15; margin: 0 0 .5rem; }
+h1 { font-size: clamp(2rem, 4.5vw, 3rem); }
+h2 { font-size: clamp(1.4rem, 2.6vw, 2rem); }
+.muted { color: var(--plum-soft); }
+.mono { font-family: "Space Mono", ui-monospace, monospace; }
+
+.wrap { width: min(1160px, 92vw); margin: 0 auto; }
+main { flex: 1 0 auto; padding: 2rem 0 4rem; }
+
+/* ---------------- header ---------------- */
+.site-header {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255, 248, 251, .92);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid var(--line);
+}
+.header-inner {
+  width: min(1160px, 92vw); margin: 0 auto;
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: 1.2rem; align-items: center; padding: .8rem 0;
+}
+.wordmark {
+  font-family: "Bagel Fat One", cursive;
+  font-size: 1.25rem; color: var(--plum);
+  letter-spacing: .2px; white-space: nowrap;
+}
+.wordmark:hover { text-decoration: none; }
+.wordmark em { font-style: normal; color: var(--hot); }
+
+.main-nav { display: flex; gap: 1rem; flex-wrap: wrap; font-weight: 700; font-size: .92rem; }
+.main-nav a { color: var(--plum); }
+
+.header-tools { display: flex; gap: .75rem; align-items: center; }
+.search-box { display: flex; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; background: #fff; }
+.search-box input {
+  border: 0; padding: .45rem .9rem; font: inherit; font-size: .88rem;
+  width: 190px; background: transparent; color: var(--plum);
+}
+.search-box input:focus { outline: none; }
+.search-go {
+  border: 0; background: var(--bubblegum); color: #fff;
+  font: inherit; font-weight: 800; font-size: .8rem; padding: 0 .9rem; cursor: pointer;
+}
+.tool-link { font-weight: 800; font-size: .88rem; color: var(--plum); white-space: nowrap; }
+.badge {
+  display: inline-block; min-width: 20px; padding: 0 6px;
+  background: var(--hot); color: #fff; border-radius: 999px;
+  font-family: "Space Mono", monospace; font-size: .72rem; text-align: center;
+}
+
+/* ---------------- buttons ---------------- */
+.btn {
+  font: inherit; font-weight: 800; cursor: pointer;
+  border-radius: 999px; padding: .6rem 1.3rem; border: 2px solid transparent;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn:hover { transform: translateY(-1px); text-decoration: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn-solid { background: var(--bubblegum); color: #fff; box-shadow: 0 4px 0 var(--hot); }
+.btn-solid:hover:not(:disabled) { box-shadow: 0 6px 0 var(--hot); }
+.btn-ghost { background: #fff; color: var(--hot); border-color: var(--blush-deep); }
+.btn-sm { padding: .4rem .9rem; font-size: .85rem; }
+.btn-block { display: block; width: 100%; text-align: center; }
+
+.icon-btn {
+  border: 2px solid var(--line); background: #fff; color: var(--hot);
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  font-size: 1rem; line-height: 1; display: grid; place-items: center;
+}
+.icon-btn.is-on { background: var(--bubblegum); color: #fff; border-color: var(--bubblegum); }
+
+/* ---------------- hero / promo ---------------- */
+.promo {
+  position: relative; overflow: hidden;
+  display: grid; grid-template-columns: 1.1fr .9fr; gap: 2rem; align-items: center;
+  background: linear-gradient(120deg, var(--blush) 0%, #fff 55%, var(--lilac) 130%);
+  border: 2px solid var(--line); border-radius: 28px;
+  padding: 2.4rem; margin-bottom: 3rem;
+}
+.promo-eyebrow {
+  font-family: "Space Mono", monospace; font-size: .78rem;
+  text-transform: uppercase; letter-spacing: .14em; color: var(--hot);
+}
+.promo h1 { font-family: "Bagel Fat One", cursive; font-size: clamp(2rem, 4vw, 2.9rem); }
+.promo p { max-width: 46ch; color: var(--plum-soft); }
+.promo-media img { border-radius: 22px; border: 3px solid #fff; box-shadow: var(--shadow); }
+
+/* ---------------- sections ---------------- */
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1rem; margin: 0 0 1.2rem; flex-wrap: wrap;
+}
+.section-head h2 { font-family: "Bagel Fat One", cursive; }
+
+/* ---------------- product grid ---------------- */
+.grid {
+  display: grid; gap: 1.4rem;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+.card {
+  background: #fff; border: 2px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; display: flex; flex-direction: column;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.card.is-soldout { opacity: .78; }
+.card-media { position: relative; display: block; aspect-ratio: 1 / 1; background: var(--blush); }
+.card-media img { width: 100%; height: 100%; object-fit: cover; }
+.card-body { padding: .9rem 1rem 1rem; display: flex; flex-direction: column; gap: .35rem; flex: 1; }
+.card-meta {
+  margin: 0; font-family: "Space Mono", monospace; font-size: .7rem;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--plum-soft);
+}
+.card-title { font-size: 1rem; margin: 0; }
+.card-title a { color: var(--plum); }
+.card-blurb { margin: 0; font-size: .85rem; color: var(--plum-soft); flex: 1; }
+.card-foot { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-top: .4rem; }
+.card-actions { display: flex; gap: .4rem; align-items: center; }
+.price { font-family: "Space Mono", monospace; font-weight: 700; font-size: 1.05rem; }
+
+/* stickers: the signature detail */
+.sticker {
+  position: absolute; top: 10px; left: 10px;
+  font-family: "Space Mono", monospace; font-size: .68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em;
+  padding: .22rem .55rem; border-radius: 4px; transform: rotate(-6deg);
+  box-shadow: 0 2px 0 rgba(59, 23, 48, .18);
+}
+.sticker-out { background: var(--plum); color: #fff; }
+.sticker-low { background: var(--bubblegum); color: #fff; }
+.sticker-mto { background: var(--mint); color: var(--plum); top: auto; bottom: 10px; transform: rotate(3deg); }
+
+/* ---------------- filters ---------------- */
+.shop-layout { display: grid; grid-template-columns: 240px 1fr; gap: 2rem; align-items: start; }
+.filters {
+  background: #fff; border: 2px solid var(--line); border-radius: var(--radius);
+  padding: 1.1rem; position: sticky; top: 90px;
+}
+.filter-group { margin-bottom: 1.1rem; }
+.filter-group > label {
+  display: block; font-family: "Space Mono", monospace; font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--plum-soft); margin-bottom: .35rem;
+}
+.filters select, .filters input[type="range"] { width: 100%; }
+.filters select, .sort-select {
+  font: inherit; font-size: .9rem; padding: .45rem .6rem;
+  border: 2px solid var(--line); border-radius: 10px; background: #fff; color: var(--plum);
+}
+.result-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.result-count { font-family: "Space Mono", monospace; font-size: .85rem; color: var(--plum-soft); }
+
+/* ---------------- product detail ---------------- */
+.pdp { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; }
+.pdp-media img { border-radius: 22px; border: 3px solid #fff; box-shadow: var(--shadow); }
+.pdp h1 { font-family: "Bagel Fat One", cursive; }
+.pdp-price { font-family: "Space Mono", monospace; font-size: 1.6rem; font-weight: 700; }
+.spec-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: .9rem; }
+.spec-table th, .spec-table td { text-align: left; padding: .5rem .2rem; border-bottom: 1px dashed var(--line); }
+.spec-table th { font-family: "Space Mono", monospace; font-weight: 400; color: var(--plum-soft); font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; width: 42%; }
+.qty-row { display: flex; gap: .6rem; align-items: center; margin: 1rem 0; }
+.qty-row input { width: 72px; font: inherit; padding: .5rem; border: 2px solid var(--line); border-radius: 10px; text-align: center; }
+.buy-row { display: flex; gap: .6rem; flex-wrap: wrap; }
+
+/* ---------------- receipt panel (signature) ---------------- */
+.receipt {
+  background: #fff; color: var(--plum);
+  border: 2px dashed var(--line); border-radius: 6px;
+  padding: 1.3rem; font-family: "Space Mono", monospace; font-size: .88rem;
+  position: relative;
+}
+.receipt::before, .receipt::after {
+  content: ""; position: absolute; left: 0; right: 0; height: 10px;
+  background: radial-gradient(circle at 6px 0, transparent 6px, #fff 6px) repeat-x;
+  background-size: 12px 10px;
+}
+.receipt::before { top: -8px; transform: rotate(180deg); }
+.receipt::after { bottom: -8px; }
+.receipt h2 { font-family: "Space Mono", monospace; font-size: 1rem; text-transform: uppercase; letter-spacing: .1em; }
+.receipt-line { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; }
+.receipt-rule { border-top: 1px dashed var(--line); margin: .6rem 0; }
+.receipt-total { font-weight: 700; font-size: 1.05rem; }
+
+/* ---------------- cart ---------------- */
+.cart-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
+.cart-line {
+  display: grid; grid-template-columns: 92px 1fr auto; gap: 1rem; align-items: center;
+  background: #fff; border: 2px solid var(--line); border-radius: var(--radius);
+  padding: .8rem; margin-bottom: .9rem;
+}
+.cart-line img { width: 92px; height: 92px; object-fit: cover; border-radius: 12px; }
+.cart-line h3 { font-size: 1rem; margin: 0 0 .1rem; }
+.stepper { display: inline-flex; align-items: center; gap: .5rem; }
+.stepper button {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line);
+  background: #fff; cursor: pointer; font-weight: 800; color: var(--hot); line-height: 1;
+}
+.coupon-row { display: flex; gap: .5rem; margin: .8rem 0; }
+.coupon-row input {
+  flex: 1; font: inherit; padding: .5rem .7rem; border: 2px solid var(--line);
+  border-radius: 10px; text-transform: uppercase;
+}
+
+/* ---------------- forms ---------------- */
+.field { margin-bottom: .9rem; }
+.field label {
+  display: block; font-family: "Space Mono", monospace; font-size: .74rem;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--plum-soft); margin-bottom: .3rem;
+}
+.field input, .field select {
+  width: 100%; font: inherit; padding: .6rem .8rem;
+  border: 2px solid var(--line); border-radius: 12px; background: #fff; color: var(--plum);
+}
+.panel {
+  background: #fff; border: 2px solid var(--line); border-radius: var(--radius);
+  padding: 1.4rem; margin-bottom: 1.4rem;
+}
+.panel h2 { font-size: 1.15rem; }
+.note {
+  background: var(--blush); border: 2px solid var(--blush-deep);
+  border-radius: 12px; padding: .7rem .9rem; font-size: .85rem; color: var(--plum-soft);
+}
+
+/* ---------------- blog ---------------- */
+.post-grid { display: grid; gap: 1.4rem; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.post-card {
+  background: #fff; border: 2px solid var(--line); border-radius: var(--radius);
+  padding: 1.3rem; display: flex; flex-direction: column; gap: .5rem;
+}
+.post-card h3 { font-size: 1.1rem; margin: 0; }
+.post-meta { font-family: "Space Mono", monospace; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--plum-soft); }
+.article { max-width: 68ch; margin: 0 auto; }
+.article h1 { font-family: "Bagel Fat One", cursive; }
+.article p { font-size: 1.05rem; }
+
+/* ---------------- account ---------------- */
+.order-card {
+  background: #fff; border: 2px solid var(--line); border-radius: var(--radius);
+  padding: 1.1rem; margin-bottom: 1rem;
+}
+.order-head { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: baseline; }
+.tag {
+  font-family: "Space Mono", monospace; font-size: .72rem; padding: .15rem .5rem;
+  border-radius: 999px; background: var(--mint); color: var(--plum);
+}
+.tag-refunded { background: var(--lilac); }
+.order-items { list-style: none; padding: 0; margin: .6rem 0 0; font-size: .9rem; }
+.order-items li { display: flex; justify-content: space-between; gap: 1rem; padding: .25rem 0; border-bottom: 1px dashed var(--line); }
+
+/* ---------------- consent + toast ---------------- */
+.consent-bar {
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+  width: min(680px, 92vw); z-index: 100;
+  background: #fff; border: 2px solid var(--bubblegum); border-radius: 18px;
+  box-shadow: var(--shadow); padding: 1rem 1.2rem;
+  display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;
+}
+.consent-bar p { margin: 0; font-size: .88rem; }
+.consent-actions { display: flex; gap: .5rem; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 90px; transform: translate(-50%, 12px);
+  background: var(--plum); color: #fff; padding: .7rem 1.2rem; border-radius: 999px;
+  font-size: .9rem; font-weight: 700; opacity: 0; pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease; z-index: 120;
+}
+.toast.is-shown { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------------- footer ---------------- */
+.site-footer { background: var(--blush); border-top: 2px solid var(--line); padding: 2.5rem 0; margin-top: auto; }
+.footer-inner {
+  width: min(1160px, 92vw); margin: 0 auto;
+  display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.4fr; gap: 2rem;
+}
+.footer-inner a { display: block; color: var(--plum); font-size: .9rem; }
+.footer-mark { font-family: "Bagel Fat One", cursive; margin: 0 0 .3rem; }
+.footer-head { font-family: "Space Mono", monospace; font-size: .74rem; text-transform: uppercase; letter-spacing: .1em; margin: 0 0 .4rem; }
+
+/* ---------------- responsive ---------------- */
+@media (max-width: 900px) {
+  .header-inner { grid-template-columns: 1fr auto; }
+  .main-nav { grid-column: 1 / -1; order: 3; }
+  .promo, .pdp, .shop-layout, .cart-layout { grid-template-columns: 1fr; }
+  .filters { position: static; }
+  .footer-inner { grid-template-columns: 1fr 1fr; }
+  .search-box input { width: 130px; }
+}
+@media (max-width: 560px) {
+  .footer-inner { grid-template-columns: 1fr; }
+  .header-tools { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

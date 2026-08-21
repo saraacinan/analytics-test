@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your bag &mdash; Sara's Whimsical Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    analytics_storage: 'denied', functionality_storage: 'granted',
+    security_storage: 'granted', wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>boot("cart");</script>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="section-head"><h2>Your bag</h2></div>
+
+  <div class="cart-layout">
+    <section id="cart-lines"></section>
+
+    <aside class="receipt" id="cart-summary"></aside>
+  </div>
+</main>
+
+<script>
+(function () {
+  const COUPON_KEY = "whimsy_coupon";
+
+  function activeCoupon() {
+    const code = localStorage.getItem(COUPON_KEY);
+    return code && COUPONS[code] ? code : null;
+  }
+
+  function discountFor(subtotal, code) {
+    if (!code || !COUPONS[code]) return 0;
+    const c = COUPONS[code];
+    return c.type === "percent" ? round2(subtotal * c.amount / 100) : Math.min(c.amount, subtotal);
+  }
+
+  function renderLines() {
+    const host = document.getElementById("cart-lines");
+    const cart = getCart();
+
+    if (!cart.length) {
+      host.innerHTML = `
+        <div class="panel">
+          <h2>Nothing in the bag yet</h2>
+          <p class="muted">Start with the beaded lilies, they are the ones people come back for.</p>
+          <a class="btn btn-solid" href="category.html">Browse the shop</a>
+        </div>`;
+      return;
+    }
+
+    host.innerHTML = cart.map(function (line) {
+      const p = productById(line.id);
+      return `
+      <div class="cart-line" data-line="${p.id}">
+        <img src="${p.image}" alt="${p.name}">
+        <div>
+          <h3><a href="product.html?id=${p.id}&list=cart">${p.name}</a></h3>
+          <p class="card-meta">${p.material} &middot; ${p.finding_metal}</p>
+          <div class="stepper">
+            <button data-dec="${p.id}" aria-label="Remove one">&minus;</button>
+            <span class="mono" data-qty="${p.id}">${line.quantity}</span>
+            <button data-inc="${p.id}" aria-label="Add one">+</button>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <p class="price">${money(p.price * line.quantity)}</p>
+          <button class="btn btn-ghost btn-sm" data-del="${p.id}">Remove</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderSummary() {
+    const host = document.getElementById("cart-summary");
+    const cart = getCart();
+    if (!cart.length) { host.style.display = "none"; return; }
+    host.style.display = "block";
+
+    const subtotal = cartSubtotal();
+    const code = activeCoupon();
+    const discount = discountFor(subtotal, code);
+    const shipping = SHOP.shippingFlat;
+    const tax = round2((subtotal - discount) * SHOP.taxRate);
+    const total = round2(subtotal - discount + shipping + tax);
+
+    host.innerHTML = `
+      <h2>Summary</h2>
+      <div class="receipt-line"><span>Subtotal</span><span>${money(subtotal)}</span></div>
+      ${code ? `<div class="receipt-line"><span>${code}</span><span>-${money(discount)}</span></div>` : ""}
+      <div class="receipt-line"><span>Shipping</span><span>${money(shipping)}</span></div>
+      <div class="receipt-line"><span>Tax</span><span>${money(tax)}</span></div>
+      <div class="receipt-rule"></div>
+      <div class="receipt-line receipt-total"><span>Total</span><span>${money(total)}</span></div>
+
+      <div class="coupon-row">
+        <input id="coupon-input" placeholder="Coupon code" value="${code || ""}">
+        <button class="btn btn-ghost btn-sm" id="coupon-apply">Apply</button>
+      </div>
+      <p class="muted" style="font-size:.78rem;margin:.2rem 0 1rem">Try WHIMSY10 or BOWFRIEND.</p>
+
+      <a class="btn btn-solid btn-block" id="to-checkout" href="checkout.html">Checkout</a>`;
+
+    document.getElementById("coupon-apply").addEventListener("click", function () {
+      const value = document.getElementById("coupon-input").value.trim().toUpperCase();
+      if (COUPONS[value]) {
+        localStorage.setItem(COUPON_KEY, value);
+        trackCouponApplied(value, true, discountFor(subtotal, value));
+        toast("Coupon applied");
+      } else {
+        localStorage.removeItem(COUPON_KEY);
+        trackCouponApplied(value, false);
+        toast("That code is not valid");
+      }
+      renderSummary();
+    });
+
+    document.getElementById("to-checkout").addEventListener("click", function () {
+      trackBeginCheckout(cartItems({ listId: "cart", listName: "Cart" }), activeCoupon());
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    renderLines();
+    renderSummary();
+
+    const items = cartItems({ listId: "cart", listName: "Cart" });
+    if (items.length) trackViewCart(items);
+
+    document.getElementById("cart-lines").addEventListener("click", function (e) {
+      const inc = e.target.closest("[data-inc]");
+      const dec = e.target.closest("[data-dec]");
+      const del = e.target.closest("[data-del]");
+
+      if (inc) { addToCart(inc.getAttribute("data-inc"), 1, "cart", "Cart"); }
+      else if (dec) { removeFromCart(dec.getAttribute("data-dec"), 1); }
+      else if (del) { removeFromCart(del.getAttribute("data-del")); }
+      else return;
+
+      renderLines();
+      renderSummary();
+    });
+  });
+})();
+</script>
+</body>
+</html>

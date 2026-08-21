@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Order confirmed &mdash; Sara's Whimsical Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    analytics_storage: 'denied', functionality_storage: 'granted',
+    security_storage: 'granted', wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  boot("order_confirmation", { transaction_id: new URLSearchParams(location.search).get("order") });
+</script>
+</head>
+<body>
+
+<main class="wrap">
+  <div style="max-width:520px;margin:0 auto">
+    <h1 style="font-family:'Bagel Fat One',cursive">Order placed</h1>
+    <p class="muted">Nothing was charged. The order is stored in this browser so you can test returns from your account page.</p>
+    <div class="receipt" id="receipt" style="margin-top:1.6rem"></div>
+    <div style="display:flex;gap:.6rem;margin-top:1.4rem;flex-wrap:wrap">
+      <a class="btn btn-solid" href="account.html#orders">See your orders</a>
+      <a class="btn btn-ghost" href="category.html">Keep shopping</a>
+    </div>
+  </div>
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const id = new URLSearchParams(location.search).get("order");
+  const order = getOrders().find(o => o.transaction_id === id);
+  const host = document.getElementById("receipt");
+
+  if (!order) {
+    host.innerHTML = "<p>That order is not in this browser.</p>";
+    return;
+  }
+
+  host.innerHTML = `
+    <h2>Receipt</h2>
+    <div class="receipt-line"><span>Order</span><span>${order.transaction_id}</span></div>
+    <div class="receipt-line"><span>Placed</span><span>${new Date(order.placed_at).toLocaleDateString("en-GB")}</span></div>
+    <div class="receipt-line"><span>Delivery</span><span>${order.shipping_tier}</span></div>
+    <div class="receipt-line"><span>Payment</span><span>${order.payment_type}</span></div>
+    <div class="receipt-rule"></div>
+    ${order.items.map(i => `<div class="receipt-line"><span>${i.quantity} &times; ${i.item_name}</span><span>${money(i.price * i.quantity)}</span></div>`).join("")}
+    <div class="receipt-rule"></div>
+    ${order.coupon ? `<div class="receipt-line"><span>Coupon</span><span>${order.coupon}</span></div>` : ""}
+    <div class="receipt-line"><span>Shipping</span><span>${money(order.shipping)}</span></div>
+    <div class="receipt-line"><span>Tax</span><span>${money(order.tax)}</span></div>
+    <div class="receipt-line receipt-total"><span>Total</span><span>${money(order.value)}</span></div>`;
+});
+</script>
+</body>
+</html>

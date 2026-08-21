@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Journal &mdash; Sara's Whimsical Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    analytics_storage: 'denied', functionality_storage: 'granted',
+    security_storage: 'granted', wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>boot("blog_index");</script>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="section-head">
+    <h2>Journal</h2>
+    <p class="muted" style="margin:0">Notes on technique, materials and keeping things from tarnishing.</p>
+  </div>
+  <div class="post-grid" id="posts"></div>
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.getElementById("posts").innerHTML = POSTS.map(function (p) {
+    return '<article class="post-card">' +
+      '<p class="post-meta">' + p.category + ' &middot; ' + p.read_minutes + ' min read &middot; ' +
+      new Date(p.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) + '</p>' +
+      '<h3><a href="blog-post.html?slug=' + p.slug + '" data-post="' + p.slug + '">' + p.title + '</a></h3>' +
+      '<p class="muted">' + p.excerpt + '</p>' +
+      '<p style="margin:0"><a href="blog-post.html?slug=' + p.slug + '" data-post="' + p.slug + '">Read the post</a></p>' +
+      '</article>';
+  }).join("");
+
+  document.getElementById("posts").addEventListener("click", function (e) {
+    var link = e.target.closest("[data-post]");
+    if (!link) return;
+    var post = POSTS.find(function (p) { return p.slug === link.getAttribute("data-post"); });
+    dataLayer.push({ event: "select_post", blog_slug: post.slug, blog_title: post.title, blog_category: post.category });
+  });
+});
+</script>
+</body>
+</html>

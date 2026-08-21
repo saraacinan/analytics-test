@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product &mdash; Sara's Whimsical Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    analytics_storage: 'denied', functionality_storage: 'granted',
+    security_storage: 'granted', wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  boot("product_detail", { item_id: new URLSearchParams(location.search).get("id") });
+</script>
+</head>
+<body>
+
+<main class="wrap">
+  <p class="mono" style="font-size:.8rem"><a href="index.html">Home</a> / <span id="crumb-cat"></span> / <span id="crumb-name"></span></p>
+
+  <section class="pdp" id="pdp"></section>
+
+  <section class="section" style="margin-top:3.5rem">
+    <div class="section-head"><h2>Goes well with</h2></div>
+    <div class="grid" id="related-grid"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  const sourceList = params.get("list") || "direct";
+  const product = productById(id);
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!product) {
+      document.getElementById("pdp").innerHTML =
+        '<p class="note">That piece is not in the shop. <a href="category.html">Browse everything</a>.</p>';
+      return;
+    }
+
+    document.title = product.name + " — Sara's Whimsical Shop";
+    document.getElementById("crumb-cat").innerHTML =
+      '<a href="category.html?category=' + product.categorySlug + '">' + product.category + '</a>';
+    document.getElementById("crumb-name").textContent = product.name;
+
+    const saved = getWishlist().indexOf(product.id) !== -1;
+    const soldOut = product.stock_status === "out_of_stock";
+
+    document.getElementById("pdp").innerHTML = `
+      <div class="pdp-media"><img src="${product.image}" alt="${product.name}"></div>
+      <div class="pdp-copy">
+        <p class="mono" style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em">
+          ${product.theme} &middot; ${product.id}
+        </p>
+        <h1>${product.name}</h1>
+        <p class="pdp-price">${money(product.price)}</p>
+        <p>${product.description}</p>
+
+        <table class="spec-table">
+          <tr><th>Material</th><td>${product.material}</td></tr>
+          <tr><th>Stringing</th><td>${product.cord_type}</td></tr>
+          <tr><th>Findings</th><td>${product.finding_metal}</td></tr>
+          <tr><th>Charms</th><td>${product.charm_count}</td></tr>
+          ${product.length_cm ? `<tr><th>Length</th><td>${product.length_cm} cm</td></tr>` : ""}
+          <tr><th>Colour family</th><td>${product.color_family}</td></tr>
+          <tr><th>Made to order</th><td>${product.made_to_order ? "Yes, allow 5 days" : "No, ships next day"}</td></tr>
+          <tr><th>Availability</th><td>${product.stock_status.replace(/_/g, " ")}</td></tr>
+        </table>
+
+        <div class="qty-row">
+          <label class="mono" for="qty" style="font-size:.8rem">Quantity</label>
+          <input type="number" id="qty" value="1" min="1" max="5">
+        </div>
+
+        <div class="buy-row">
+          <button class="btn btn-solid" id="pdp-add" ${soldOut ? "disabled" : ""}>
+            ${soldOut ? "Sold out for now" : "Add to bag"}
+          </button>
+          <button class="btn btn-ghost${saved ? " is-on" : ""}" id="pdp-wish">
+            ${saved ? "Saved" : "Save for later"}
+          </button>
+        </div>
+      </div>`;
+
+    trackViewItem(product, sourceList, sourceList);
+
+    document.getElementById("pdp-add").addEventListener("click", function () {
+      const qty = Math.max(1, parseInt(document.getElementById("qty").value, 10) || 1);
+      addToCart(product.id, qty, "product_detail", "Product detail");
+    });
+
+    document.getElementById("pdp-wish").addEventListener("click", function () {
+      toggleWishlist(product.id);
+      this.textContent = getWishlist().indexOf(product.id) !== -1 ? "Saved" : "Save for later";
+    });
+
+    /* ---- related list ---- */
+    const listId = "pdp_related";
+    const listName = "Product detail / Goes well with";
+    const related = PRODUCTS
+      .filter(p => p.id !== product.id && (p.theme === product.theme || p.color_family === product.color_family))
+      .slice(0, 4);
+
+    if (related.length) {
+      const grid = document.getElementById("related-grid");
+      grid.innerHTML = related.map((p, i) => productCard(p, i, listId, listName)).join("");
+      trackViewItemList(related, listId, listName);
+      wireCardEvents(grid, listId, listName);
+    }
+  });
+})();
+</script>
+</body>
+</html>

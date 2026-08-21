@@ -1,62 +1,105 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Test Shop</title>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-  </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sara's Whimsical Shop &mdash; handmade beadwork, bows and bag charms</title>
+<meta name="description" content="Small batch handmade jewellery: French beaded lilies, wire wrapped bracelets, paracord bows and ceramic bag charms.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<!-- Consent Mode v2 defaults. Must run before any measurement tag. -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied',
+    functionality_storage: 'granted',
+    security_storage: 'granted',
+    wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>boot("home");</script>
 </head>
 <body>
-  <h1>Test Shop</h1>
 
-  <div>
-    <h2>Kırmızı Tişört</h2>
-    <p>199 TL</p>
-    <button id="btn-tisort">Sepete Ekle</button>
-  </div>
+<main class="wrap">
 
-  <div>
-    <h2>Mavi Kupa</h2>
-    <p>89 TL</p>
-    <button id="btn-kupa">Sepete Ekle</button>
-  </div>
+  <section class="promo" id="promo"></section>
 
-  <hr>
-  <button id="btn-checkout">Satın Al</button>
+  <section class="section" id="featured">
+    <div class="section-head">
+      <h2>Just finished</h2>
+      <a href="category.html">See everything</a>
+    </div>
+    <div class="grid" id="featured-grid"></div>
+  </section>
 
-  <script>
-    document.getElementById('btn-tisort').addEventListener('click', function () {
-      dataLayer.push({
-        event: 'add_to_cart',
-        item_id: 'SKU-001',
-        item_name: 'Kirmizi Tisort',
-        price: 199,
-        currency: 'TRY'
-      });
-      console.log('add_to_cart gonderildi');
+  <section class="section" style="margin-top:3rem">
+    <div class="section-head">
+      <h2>From the journal</h2>
+      <a href="blog.html">All posts</a>
+    </div>
+    <div class="post-grid" id="post-teasers"></div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  const promo = PROMOTIONS[0];
+  const promoProduct = productById(promo.itemId);
+
+  document.addEventListener("DOMContentLoaded", function () {
+    /* ---- promo banner ---- */
+    const el = document.getElementById("promo");
+    el.innerHTML = `
+      <div class="promo-copy">
+        <p class="promo-eyebrow">${promo.promotion_name}</p>
+        <h1>${promo.headline}</h1>
+        <p>${promo.sub}</p>
+        <a class="btn btn-solid" id="promo-cta" href="${promo.href}">${promo.cta}</a>
+      </div>
+      <div class="promo-media">
+        <img src="${promoProduct.image}" alt="${promoProduct.name}">
+      </div>`;
+    trackViewPromotion(promo, promoProduct);
+
+    document.getElementById("promo-cta").addEventListener("click", function () {
+      trackSelectPromotion(promo, promoProduct);
     });
 
-    document.getElementById('btn-kupa').addEventListener('click', function () {
-      dataLayer.push({
-        event: 'add_to_cart',
-        item_id: 'SKU-002',
-        item_name: 'Mavi Kupa',
-        price: 89,
-        currency: 'TRY'
-      });
-      console.log('add_to_cart gonderildi');
-    });
+    /* ---- featured list ---- */
+    const listId = "home_featured";
+    const listName = "Home / Just finished";
+    const featured = ["NL-05", "BR-03", "KC-02", "BC-01", "NL-04", "KC-06", "BR-01", "BC-03"]
+      .map(productById);
 
-    document.getElementById('btn-checkout').addEventListener('click', function () {
-      dataLayer.push({
-        event: 'purchase',
-        transaction_id: 'T-' + Date.now(),
-        value: 288,
-        currency: 'TRY'
-      });
-      console.log('purchase gonderildi');
-    });
-  </script>
+    const grid = document.getElementById("featured-grid");
+    grid.innerHTML = featured.map((p, i) => productCard(p, i, listId, listName)).join("");
+    trackViewItemList(featured, listId, listName);
+    wireCardEvents(grid, listId, listName);
+
+    /* ---- journal teasers ---- */
+    document.getElementById("post-teasers").innerHTML = POSTS.map(p => `
+      <article class="post-card">
+        <p class="post-meta">${p.category} &middot; ${p.read_minutes} min read</p>
+        <h3><a href="blog-post.html?slug=${p.slug}">${p.title}</a></h3>
+        <p class="muted">${p.excerpt}</p>
+      </article>`).join("");
+  });
+})();
+</script>
 </body>
 </html>

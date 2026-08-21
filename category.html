@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop &mdash; Sara's Whimsical Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    analytics_storage: 'denied', functionality_storage: 'granted',
+    security_storage: 'granted', wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  boot("product_list", {
+    list_category: new URLSearchParams(location.search).get("category") || "all",
+    search_term: new URLSearchParams(location.search).get("q") || undefined
+  });
+</script>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="section-head">
+    <h2 id="list-title">Shop</h2>
+  </div>
+
+  <div class="shop-layout">
+    <aside class="filters" aria-label="Filters">
+      <div class="filter-group">
+        <label for="f-category">Category</label>
+        <select id="f-category"><option value="">All categories</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="f-material">Material</label>
+        <select id="f-material"><option value="">All materials</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="f-color">Colour</label>
+        <select id="f-color"><option value="">All colours</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="f-theme">Theme</label>
+        <select id="f-theme"><option value="">All themes</option></select>
+      </div>
+      <div class="filter-group">
+        <label for="f-price">Max price: <span class="mono" id="price-out">$60</span></label>
+        <input type="range" id="f-price" min="10" max="60" step="2" value="60">
+      </div>
+      <button class="btn btn-ghost btn-block btn-sm" id="f-clear">Clear filters</button>
+    </aside>
+
+    <section>
+      <div class="result-bar">
+        <p class="result-count" id="result-count"></p>
+        <label class="result-count">
+          Sort
+          <select class="sort-select" id="sort-by">
+            <option value="featured">Featured</option>
+            <option value="price_asc">Price, low to high</option>
+            <option value="price_desc">Price, high to low</option>
+            <option value="name_asc">Name, A to Z</option>
+          </select>
+        </label>
+      </div>
+      <div class="grid" id="product-grid"></div>
+      <p class="note" id="empty-state" style="display:none">
+        Nothing matches those filters yet. Try widening the price or clearing a filter.
+      </p>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const searchTerm = params.get("q");
+  const startCategory = params.get("category") || "";
+
+  const state = {
+    category: startCategory,
+    material: "",
+    color: "",
+    theme: "",
+    priceMax: 60,
+    sort: "featured"
+  };
+
+  let listId, listName;
+
+  function computeList() {
+    if (searchTerm) return { id: "search_results", name: "Search results" };
+    if (state.category) {
+      const cat = CATEGORIES.find(c => c.slug === state.category);
+      return { id: "category_" + state.category, name: "Category / " + (cat ? cat.name : state.category) };
+    }
+    return { id: "category_all", name: "Category / All products" };
+  }
+
+  function matchesSearch(p) {
+    const t = searchTerm.toLowerCase();
+    return [p.name, p.category, p.material, p.theme, p.color_family, p.blurb]
+      .join(" ").toLowerCase().includes(t);
+  }
+
+  function apply() {
+    let list = PRODUCTS.slice();
+    if (searchTerm) list = list.filter(matchesSearch);
+    if (state.category) list = list.filter(p => p.categorySlug === state.category);
+    if (state.material) list = list.filter(p => p.material === state.material);
+    if (state.color) list = list.filter(p => p.color_family === state.color);
+    if (state.theme) list = list.filter(p => p.theme === state.theme);
+    list = list.filter(p => p.price <= state.priceMax);
+
+    if (state.sort === "price_asc")  list.sort((a, b) => a.price - b.price);
+    if (state.sort === "price_desc") list.sort((a, b) => b.price - a.price);
+    if (state.sort === "name_asc")   list.sort((a, b) => a.name.localeCompare(b.name));
+    return list;
+  }
+
+  function appliedCount() {
+    return ["category", "material", "color", "theme"].filter(k => state[k]).length +
+           (state.priceMax < 60 ? 1 : 0);
+  }
+
+  function render(list, fireListView) {
+    const grid = document.getElementById("product-grid");
+    grid.innerHTML = list.map((p, i) => productCard(p, i, listId, listName)).join("");
+    document.getElementById("empty-state").style.display = list.length ? "none" : "block";
+    document.getElementById("result-count").textContent =
+      list.length + (list.length === 1 ? " piece" : " pieces");
+    if (fireListView && list.length) trackViewItemList(list, listId, listName);
+  }
+
+  function fillSelect(id, key) {
+    const sel = document.getElementById(id);
+    const values = [...new Set(PRODUCTS.map(p => p[key]))].sort();
+    values.forEach(v => {
+      const o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const list0 = computeList();
+    listId = list0.id; listName = list0.name;
+
+    /* title */
+    const title = document.getElementById("list-title");
+    if (searchTerm) title.textContent = 'Results for "' + searchTerm + '"';
+    else if (state.category) title.textContent = listName.replace("Category / ", "");
+    else title.textContent = "Everything in the shop";
+
+    /* filter options */
+    CATEGORIES.forEach(c => {
+      const o = document.createElement("option");
+      o.value = c.slug; o.textContent = c.name;
+      document.getElementById("f-category").appendChild(o);
+    });
+    fillSelect("f-material", "material");
+    fillSelect("f-color", "color_family");
+    fillSelect("f-theme", "theme");
+    document.getElementById("f-category").value = state.category;
+
+    const first = apply();
+    render(first, true);
+    if (searchTerm) trackSearch(searchTerm, first.length);
+
+    wireCardEvents(document.getElementById("product-grid"), listId, listName);
+
+    /* filter handlers */
+    function onFilterChange(key, value) {
+      state[key] = value;
+      const list = apply();
+      render(list, true);
+      trackFilter({
+        category: state.category, material: state.material, color: state.color,
+        theme: state.theme, priceMax: state.priceMax, appliedCount: appliedCount()
+      }, list.length, listId);
+    }
+
+    document.getElementById("f-category").addEventListener("change", e => onFilterChange("category", e.target.value));
+    document.getElementById("f-material").addEventListener("change", e => onFilterChange("material", e.target.value));
+    document.getElementById("f-color").addEventListener("change", e => onFilterChange("color", e.target.value));
+    document.getElementById("f-theme").addEventListener("change", e => onFilterChange("theme", e.target.value));
+
+    const price = document.getElementById("f-price");
+    price.addEventListener("input", function () {
+      document.getElementById("price-out").textContent = "$" + price.value;
+    });
+    price.addEventListener("change", function () {
+      onFilterChange("priceMax", Number(price.value));
+    });
+
+    document.getElementById("f-clear").addEventListener("click", function () {
+      state.category = ""; state.material = ""; state.color = ""; state.theme = ""; state.priceMax = 60;
+      document.getElementById("f-category").value = "";
+      document.getElementById("f-material").value = "";
+      document.getElementById("f-color").value = "";
+      document.getElementById("f-theme").value = "";
+      price.value = 60;
+      document.getElementById("price-out").textContent = "$60";
+      const list = apply();
+      render(list, true);
+      dataLayer.push({ event: "filters_cleared", item_list_id: listId });
+    });
+
+    document.getElementById("sort-by").addEventListener("change", function (e) {
+      state.sort = e.target.value;
+      render(apply(), true);
+      trackSort(state.sort, listId);
+    });
+  });
+})();
+</script>
+</body>
+</html>

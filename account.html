@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your account &mdash; Sara's Whimsical Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    analytics_storage: 'denied', functionality_storage: 'granted',
+    security_storage: 'granted', wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>boot("account");</script>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="section-head"><h2>Your account</h2></div>
+
+  <section id="auth-area"></section>
+
+  <section id="favourites" style="margin-top:2.5rem">
+    <div class="section-head"><h2>Saved pieces</h2></div>
+    <div class="grid" id="wish-grid"></div>
+    <p class="note" id="wish-empty" style="display:none">Nothing saved yet. Tap the heart on any piece.</p>
+  </section>
+
+  <section id="orders" style="margin-top:2.5rem">
+    <div class="section-head"><h2>Orders and returns</h2></div>
+    <div id="orders-list"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+
+  function renderAuth() {
+    const host = document.getElementById("auth-area");
+    const session = getSession();
+
+    if (session) {
+      host.innerHTML = `
+        <div class="panel">
+          <h2>Signed in as ${session.display_name}</h2>
+          <table class="spec-table">
+            <tr><th>User ID</th><td class="mono">${session.user_id}</td></tr>
+            <tr><th>Email SHA-256</th><td class="mono" style="word-break:break-all;font-size:.72rem">${session.email_sha256}</td></tr>
+            <tr><th>Phone SHA-256</th><td class="mono" style="word-break:break-all;font-size:.72rem">${session.phone_sha256}</td></tr>
+            <tr><th>Lifetime orders</th><td>${session.customer_lifetime_orders}</td></tr>
+          </table>
+          <p class="note">Only the hashes are ever pushed to the data layer. The plain values live in the demo account file and are never sent.</p>
+          <button class="btn btn-ghost" id="logout-btn" style="margin-top:1rem">Sign out</button>
+        </div>`;
+      document.getElementById("logout-btn").addEventListener("click", function () {
+        doLogout();
+        renderAuth();
+        toast("Signed out");
+      });
+      return;
+    }
+
+    host.innerHTML = `
+      <div class="panel" style="max-width:420px">
+        <h2>Sign in</h2>
+        <p class="note">Demo accounts: <span class="mono">sara / demo1234</span> or <span class="mono">guest2 / demo1234</span>. No real credentials are accepted or stored.</p>
+        <div class="field" style="margin-top:1rem">
+          <label for="username">Username</label>
+          <input id="username" autocomplete="off" value="sara">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="off" value="demo1234">
+        </div>
+        <button class="btn btn-solid btn-block" id="login-btn">Sign in</button>
+        <p id="login-error" class="muted" style="display:none;margin-top:.6rem">That username and password do not match a demo account.</p>
+      </div>`;
+
+    document.getElementById("login-btn").addEventListener("click", async function () {
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value;
+      const session = await doLogin(u, p);
+      if (!session) { document.getElementById("login-error").style.display = "block"; return; }
+      renderAuth();
+      renderOrders();
+      toast("Welcome back, " + session.display_name);
+    });
+  }
+
+  function renderWishlist() {
+    const ids = getWishlist();
+    const grid = document.getElementById("wish-grid");
+    const empty = document.getElementById("wish-empty");
+    if (!ids.length) { grid.innerHTML = ""; empty.style.display = "block"; return; }
+    empty.style.display = "none";
+    const items = ids.map(productById).filter(Boolean);
+    grid.innerHTML = items.map((p, i) => productCard(p, i, "wishlist", "Saved pieces")).join("");
+    trackViewItemList(items, "wishlist", "Saved pieces");
+    wireCardEvents(grid, "wishlist", "Saved pieces");
+  }
+
+  function renderOrders() {
+    const host = document.getElementById("orders-list");
+    const orders = getOrders();
+
+    if (!orders.length) {
+      host.innerHTML = '<p class="note">No orders in this browser yet. Place one and it will appear here with a return button.</p>';
+      return;
+    }
+
+    host.innerHTML = orders.map(function (o) {
+      return `
+      <div class="order-card" data-order="${o.transaction_id}">
+        <div class="order-head">
+          <div>
+            <p class="mono" style="margin:0;font-size:.85rem">${o.transaction_id}</p>
+            <p class="muted" style="margin:0;font-size:.85rem">
+              ${new Date(o.placed_at).toLocaleDateString("en-GB")} &middot; ${o.shipping_tier} &middot; ${o.payment_type}
+            </p>
+          </div>
+          <div style="text-align:right">
+            <p class="price" style="margin:0">${money(o.value)}</p>
+            <span class="tag ${o.refunded ? "tag-refunded" : ""}">${o.refunded ? "returned" : "delivered"}</span>
+          </div>
+        </div>
+        <ul class="order-items">
+          ${o.items.map(i => `
+            <li>
+              <span>${i.quantity} &times; ${i.item_name}</span>
+              <span>
+                ${money(i.price * i.quantity)}
+                ${o.refunded ? "" : `<button class="btn btn-ghost btn-sm" data-refund-item="${i.item_id}" data-order-id="${o.transaction_id}" style="margin-left:.6rem">Return</button>`}
+              </span>
+            </li>`).join("")}
+        </ul>
+        ${o.refunded ? "" : `<button class="btn btn-ghost btn-sm" data-refund-all="${o.transaction_id}" style="margin-top:.8rem">Return the whole order</button>`}
+      </div>`;
+    }).join("");
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    renderAuth();
+    renderWishlist();
+    renderOrders();
+
+    document.getElementById("orders-list").addEventListener("click", function (e) {
+      const all = e.target.closest("[data-refund-all]");
+      const one = e.target.closest("[data-refund-item]");
+      const orders = getOrders();
+
+      if (all) {
+        const order = orders.find(o => o.transaction_id === all.getAttribute("data-refund-all"));
+        trackRefund(order, order.items, false);
+        order.refunded = true;
+        setOrders(orders);
+        renderOrders();
+        toast("Full return recorded");
+        return;
+      }
+
+      if (one) {
+        const order = orders.find(o => o.transaction_id === one.getAttribute("data-order-id"));
+        const item = order.items.find(i => i.item_id === one.getAttribute("data-refund-item"));
+        trackRefund(order, [item], true);
+        toast("Return recorded for " + item.item_name);
+      }
+    });
+
+    if (location.hash) {
+      const target = document.querySelector(location.hash);
+      if (target) target.scrollIntoView();
+    }
+  });
+})();
+</script>
+</body>
+</html>

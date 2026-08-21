@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Journal &mdash; Sara's Whimsical Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', {
+    ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+    analytics_storage: 'denied', functionality_storage: 'granted',
+    security_storage: 'granted', wait_for_update: 500
+  });
+</script>
+
+<!-- Google Tag Manager container snippet goes here -->
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/analytics.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  boot("blog_post", { blog_slug: new URLSearchParams(location.search).get("slug") });
+</script>
+</head>
+<body>
+
+<main class="wrap">
+  <article class="article" id="article"></article>
+
+  <section style="margin-top:3.5rem">
+    <div class="section-head"><h2>Pieces from this post</h2></div>
+    <div class="grid" id="post-products"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var RELATED = {
+    "french-beading-basics": ["NL-02", "NL-01", "BR-03"],
+    "choosing-cord": ["KC-01", "KC-06", "BR-01"],
+    "caring-for-plated-findings": ["NL-05", "BC-04", "NL-03"]
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var slug = new URLSearchParams(location.search).get("slug");
+    var post = POSTS.find(function (p) { return p.slug === slug; });
+    var host = document.getElementById("article");
+
+    if (!post) {
+      host.innerHTML = '<p class="note">That post does not exist. <a href="blog.html">Back to the journal</a>.</p>';
+      return;
+    }
+
+    document.title = post.title + " — Sara's Whimsical Shop";
+    host.innerHTML =
+      '<p class="post-meta">' + post.category + ' &middot; ' + post.read_minutes + ' min read &middot; ' +
+      new Date(post.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) + '</p>' +
+      '<h1>' + post.title + '</h1>' +
+      post.body.map(function (para) { return "<p>" + para + "</p>"; }).join("") +
+      '<p class="muted" style="margin-top:2rem"><a href="blog.html">Back to the journal</a></p>';
+
+    trackBlogView(post);
+
+    /* scroll depth on the article */
+    var fired = {};
+    window.addEventListener("scroll", function () {
+      var max = document.body.scrollHeight - window.innerHeight;
+      if (max <= 0) return;
+      var pct = Math.round((window.scrollY / max) * 100);
+      [25, 50, 75, 100].forEach(function (mark) {
+        if (pct >= mark && !fired[mark]) {
+          fired[mark] = true;
+          dataLayer.push({ event: "scroll_depth", percent_scrolled: mark, blog_slug: post.slug });
+        }
+      });
+    }, { passive: true });
+
+    /* products referenced by the post */
+    var ids = RELATED[post.slug] || [];
+    var items = ids.map(productById).filter(Boolean);
+    if (items.length) {
+      var listId = "blog_" + post.slug;
+      var listName = "Journal / " + post.title;
+      var grid = document.getElementById("post-products");
+      grid.innerHTML = items.map(function (p, i) { return productCard(p, i, listId, listName); }).join("");
+      trackViewItemList(items, listId, listName);
+      wireCardEvents(grid, listId, listName);
+    }
+  });
+})();
+</script>
+</body>
+</html>
